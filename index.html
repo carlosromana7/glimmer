@@ -290,8 +290,9 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
       <div class="v-cart-head">
         <div class="v-cart-title">🛒 Venta actual</div>
         <div style="margin-top:11px">
+          <div style="font-size:10px;font-weight:700;color:var(--danger);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px">Cliente obligatorio *</div>
           <div style="display:flex;gap:8px;align-items:center">
-            <input type="text" id="v-cli-inp" placeholder="Buscar cliente…" oninput="vBuscarCli(this.value)" style="font-size:13px;padding:8px 14px;border-radius:20px;flex:1">
+            <input type="text" id="v-cli-inp" placeholder="Buscar o escribir nombre…" oninput="vBuscarCli(this.value)" style="font-size:13px;padding:8px 14px;border-radius:20px;flex:1">
             <button class="btn btn-ghost btn-sm" onclick="abrirMCliV()" title="Nueva cliente" style="white-space:nowrap;flex-shrink:0">+ Nueva</button>
           </div>
           <div id="v-cli-suger" style="display:none;background:var(--white);border:2px solid var(--line);border-radius:10px;overflow:hidden;margin-top:5px"></div>
@@ -311,7 +312,7 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
           <div><label>Paga ahora (Bs.)</label><input type="number" id="v-pago" placeholder="0.00" min="0" step="0.01" oninput="vSaldo()"></div>
           <div><label>Saldo pendiente</label><input type="number" id="v-saldo" readonly style="color:var(--danger);font-weight:700" placeholder="0.00"></div>
         </div>
-        <button class="btn btn-plum" style="width:100%;padding:13px;font-size:14px" onclick="vRegistrar()">✓ Registrar venta</button>
+        <button class="btn btn-plum" style="width:100%;padding:13px;font-size:14px" onclick="vRegistrar()" id="btn-registrar">✓ Registrar venta</button>
         <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:7px" onclick="vLimpiar()">Limpiar</button>
       </div>
     </div>
@@ -1036,6 +1037,8 @@ function vAgregar(pid){
   if(ex) ex.cantidad++;
   else carrito.push({id:p.id,nombre:p.nombre,emoji:p.emoji||'🛍️',cantidad:1,precio:p.precio,costo:p.costo||0});
   vRenderCart();
+  const btn=document.getElementById('btn-registrar');
+  if(btn){btn.style.background='';}
 }
 
 function vRenderCart(){
@@ -1078,9 +1081,17 @@ function vSelCli(id){
   document.getElementById('v-cli-suger').style.display='none';
   document.getElementById('v-cli-sel').style.display='block';
   document.getElementById('v-cli-sel').innerHTML=`<div class="cli-pill">👤 ${c.nombre}${c.telefono?' · '+c.telefono:''}<button onclick="vDeselCli()">×</button></div>`;
+  // Botón verde cuando hay cliente
+  const btn=document.getElementById('btn-registrar');
+  if(btn){btn.style.background='var(--ok)';}
 }
 
-function vDeselCli(){cliSel=null;document.getElementById('v-cli-sel').style.display='none';}
+function vDeselCli(){
+  cliSel=null;
+  document.getElementById('v-cli-sel').style.display='none';
+  const btn=document.getElementById('btn-registrar');
+  if(btn){btn.style.background='';}
+}
 
 function abrirMCliV(){
   // Guardar referencia para saber que venimos de vendedora
@@ -1090,6 +1101,7 @@ function abrirMCliV(){
 
 async function vRegistrar(){
   if(!carrito.length){toast('Agrega al menos un producto','err');return;}
+  if(!cliSel){toast('Selecciona o crea una cliente primero','err');return;}
   const total=carrito.reduce((s,it)=>s+it.precio*it.cantidad,0);
   const costoTotal=carrito.reduce((s,it)=>s+(it.costo||0)*it.cantidad,0);
   const pagoAhora=parseFloat(document.getElementById('v-pago').value)||total;
