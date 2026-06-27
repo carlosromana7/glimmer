@@ -581,13 +581,13 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
     <div><label>Nombre *</label><input type="text" id="mp-n" placeholder="Labial rojo…"></div>
     <div style="grid-column:span 2">
       <label>Categorías <span style="color:var(--ink3);font-weight:400">(selecciona hasta 2)</span></label>
-      <div id="cat-selector" style="display:flex;flex-wrap:wrap;gap:7px;margin-top:6px"><div class="cat-pill" data-cat="Maquillaje" data-emoji="💄" onclick="toggleCat(this)">💄 Maquillaje</div><div class="cat-pill" data-cat="Cuidado de la piel" data-emoji="🌿" onclick="toggleCat(this)">🌿 Cuidado de la piel</div><div class="cat-pill" data-cat="Cuidado del cabello" data-emoji="💧" onclick="toggleCat(this)">💧 Cuidado del cabello</div><div class="cat-pill" data-cat="Accesorios" data-emoji="💍" onclick="toggleCat(this)">💍 Accesorios</div></div><div class="cat-pill" data-cat="Base" data-emoji="🧴" onclick="toggleCat(this)">🧴 Base</div><div class="cat-pill" data-cat="Sombras" data-emoji="👁️" onclick="toggleCat(this)">👁️ Sombras</div><div class="cat-pill" data-cat="Rubor" data-emoji="🌸" onclick="toggleCat(this)">🌸 Rubor</div><div class="cat-pill" data-cat="Iluminador" data-emoji="✨" onclick="toggleCat(this)">✨ Iluminador</div><div class="cat-pill" data-cat="Delineador" data-emoji="✏️" onclick="toggleCat(this)">✏️ Delineador</div><div class="cat-pill" data-cat="Máscara" data-emoji="🪄" onclick="toggleCat(this)">🪄 Máscara</div><div class="cat-pill" data-cat="Rimel" data-emoji="👁" onclick="toggleCat(this)">👁 Rimel</div><div class="cat-pill" data-cat="Skincare" data-emoji="💆" onclick="toggleCat(this)">💆 Skincare</div><div class="cat-pill" data-cat="Sérum de rostro" data-emoji="🫧" onclick="toggleCat(this)">🫧 Sérum de rostro</div><div class="cat-pill" data-cat="Sérum de cabello" data-emoji="💧" onclick="toggleCat(this)">💧 Sérum de cabello</div><div class="cat-pill" data-cat="Perfumes" data-emoji="🌺" onclick="toggleCat(this)">🌺 Perfumes</div><div class="cat-pill" data-cat="Accesorios" data-emoji="💍" onclick="toggleCat(this)">💍 Accesorios</div></div>
+      <div id="cat-selector" style="display:flex;flex-wrap:wrap;gap:7px;margin-top:6px"><div class="cat-pill" data-cat="Maquillaje" data-emoji="💄" onclick="toggleCat(this)">💄 Maquillaje</div><div class="cat-pill" data-cat="Cuidado de la piel" data-emoji="🌿" onclick="toggleCat(this)">🌿 Cuidado de la piel</div><div class="cat-pill" data-cat="Cuidado del cabello" data-emoji="💧" onclick="toggleCat(this)">💧 Cuidado del cabello</div><div class="cat-pill" data-cat="Accesorios" data-emoji="💍" onclick="toggleCat(this)">💍 Accesorios</div></div><div class="cat-pill" data-cat="Cuidado de la piel" data-emoji="🌿" onclick="toggleCat(this)">🌿 Cuidado de la piel</div><div class="cat-pill" data-cat="Cuidado del cabello" data-emoji="💧" onclick="toggleCat(this)">💧 Cuidado del cabello</div><div class="cat-pill" data-cat="Accesorios" data-emoji="💍" onclick="toggleCat(this)">💍 Accesorios</div></div><div class="cat-pill" data-cat="Cuidado de la piel" data-emoji="🌿" onclick="toggleCat(this)">🌿 Cuidado de la piel</div><div class="cat-pill" data-cat="Cuidado del cabello" data-emoji="💧" onclick="toggleCat(this)">💧 Cuidado del cabello</div></div>
       <input type="hidden" id="mp-cat" value="">
     </div>
     <div>
       <label>Emoji del producto</label>
       <input type="text" id="mp-emoji" placeholder="💄" maxlength="2" style="font-size:22px;text-align:center;margin-bottom:8px">
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"><span class="emoji-opt" onclick="selEmoji('💄')" title="Maquillaje">💄 <small style="font-size:10px;color:var(--ink3)">Maquillaje</small></span><span class="emoji-opt" onclick="selEmoji('🌿')" title="Cuidado de la piel">🌿 <small style="font-size:10px;color:var(--ink3)">Cuidado de la piel</small></span><span class="emoji-opt" onclick="selEmoji('💧')" title="Cuidado del cabello">💧 <small style="font-size:10px;color:var(--ink3)">Cuidado del cabello</small></span><span class="emoji-opt" onclick="selEmoji('💍')" title="Accesorios">💍 <small style="font-size:10px;color:var(--ink3)">Accesorios</small></span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"><span class="emoji-opt" onclick="selEmoji('💄')" title="Maquillaje">💄 <small style="font-size:10px;color:var(--ink3)">Maquillaje</small></span><span class="emoji-opt" onclick="selEmoji('🌿')" title="Cuidado de la piel">🌿 <small style="font-size:10px;color:var(--ink3)">Piel</small></span><span class="emoji-opt" onclick="selEmoji('💧')" title="Cuidado del cabello">💧 <small style="font-size:10px;color:var(--ink3)">Cabello</small></span><span class="emoji-opt" onclick="selEmoji('💍')" title="Accesorios">💍 <small style="font-size:10px;color:var(--ink3)">Accesorios</small></span></div>
     </div>
     <div><label>Costo (Bs.) *</label><input type="number" id="mp-costo" min="0" step="0.01" oninput="prevM()"></div>
     <div><label>Precio (Bs.) *</label><input type="number" id="mp-precio" min="0" step="0.01" oninput="prevM()"></div>
@@ -752,7 +752,7 @@ async function syncAll() {
       sbGet('pagos','select=*'),
     ]);
     if(Array.isArray(prods)) DB.productos = prods.map(p=>({
-      id:p.id, nombre:p.nombre, emoji:p.emoji||'🛍️', categoria:p.categoria||'Otros',
+      id:p.id, nombre:p.nombre, emoji:p.emoji||'🛍️', categoria:p.categoria||'Accesorios',
       costo:+p.costo||0, precio:+p.precio||0, stock:+p.stock||0, stock_min:+p.stock_min||5
     }));
     if(Array.isArray(clis)) DB.clientes = clis.map(c=>({
@@ -978,7 +978,7 @@ function abrirMProd(){
 }
 
 // Categorías disponibles con emojis
-const CATS_DATA = [("Labiales", "💄"), ("Base", "🧴"), ("Sombras", "👁️"), ("Rubor", "🌸"), ("Iluminador", "✨"), ("Delineador", "✏️"), ("Máscara", "🪄"), ("Rimel", "👁"), ("Skincare", "💆"), ("Sérum de rostro", "🫧"), ("Sérum de cabello", "💧"), ("Perfumes", "🌺"), ("Accesorios", "💍")];
+const CATS_DATA = [['Maquillaje','💄'],['Cuidado de la piel','🌿'],['Cuidado del cabello','💧'],['Accesorios','💍']];
 
 function toggleCat(el){
   const sels=document.querySelectorAll('.cat-pill.sel');
@@ -1085,7 +1085,7 @@ function rFin(){
 // ═══════════════════════════════════
 function rRep(){
   const vs=filtrarP(DB.ventas,periodo);
-  const cat={};vs.forEach(v=>v.items?.forEach(it=>{const p=DB.productos.find(x=>x.id==it.id);const c=p?.categoria||'Otros';cat[c]=(cat[c]||0)+it.precio*it.cantidad;}));
+  const cat={};vs.forEach(v=>v.items?.forEach(it=>{const p=DB.productos.find(x=>x.id==it.id);const c=p?.categoria||'Accesorios';cat[c]=(cat[c]||0)+it.precio*it.cantidad;}));
   mkChart('cat','ch-cat','doughnut',{labels:Object.keys(cat).length?Object.keys(cat):['Sin datos'],datasets:[{data:Object.values(cat).length?Object.values(cat):[1],backgroundColor:['#6B2D5E','#E8608A','#C090B0','#8B3A78','#FFD0E4','#A040A0','#E0A0C0','#4A1040']}]});
   const tbS=document.getElementById('tb-stock');
   tbS.innerHTML=DB.productos.length?[...DB.productos].sort((a,b)=>a.stock-b.stock).map(p=>{const est=p.stock===0?'<span class="badge b-bad">Sin stock</span>':p.stock<=p.stock_min?'<span class="badge b-warn">Reponer</span>':'<span class="badge b-ok">OK</span>';return`<tr><td><strong>${p.nombre}</strong></td><td style="text-align:right">${p.stock}</td><td>${est}</td></tr>`;}).join(''):'<tr><td colspan="3" style="color:var(--ink3);text-align:center;padding:20px">Sin productos</td></tr>';
@@ -1159,7 +1159,7 @@ let vCatAct='Todo';
 function initV(){carrito=[];cliSel=null;vCatAct='Todo';vRenderCats();vRenderGrid();vRenderCart();}
 
 function vRenderCats(){
-  // Expandir categorías compuestas "Labiales / Base" → ['Labiales','Base']
+  // Expandir categorías compuestas "Maquillaje / Accesorios" → ['Maquillaje','Accesorios']
   const allCats=new Set();
   DB.productos.forEach(p=>{
     if(p.categoria) p.categoria.split(' / ').forEach(c=>allCats.add(c.trim()));
