@@ -1191,17 +1191,21 @@ function vRenderGrid(q=''){
   grid.innerHTML=prods.map(p=>{
     const agotado=p.stock===0;
     const stockBadge=agotado
-      ?'<div class="prod-low" style="background:#fdeaed;color:#c01830">SIN STOCK</div>'
-      :`<div style="position:absolute;top:7px;left:8px;background:rgba(107,45,94,.12);color:var(--plum);font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px">${p.stock} disp.</div>`;
-    return`<div class="prod-btn${agotado?' prod-agotado':''}" onclick="${agotado?'toast('Sin stock','err')':'vAgregar('+p.id+')'}" style="${agotado?'opacity:.5;cursor:not-allowed;':''}">
-      ${stockBadge}
-      <div class="prod-emoji">${p.emoji||'🛍️'}</div>
-      <div class="prod-name">${p.nombre}</div>
-      <div class="prod-cat">${p.categoria||''}</div>
-      <div class="prod-price">${fm(p.precio)}</div>
-    </div>`;
+      ?'<div class="prod-low" style="background:#fdeaed;color:#c01830;position:absolute;top:7px;right:7px">SIN STOCK</div>'
+      :'<div style="position:absolute;top:7px;left:8px;background:rgba(107,45,94,.12);color:#6B2D5E;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px">'+p.stock+' disp.</div>';
+    const style=agotado?'opacity:.45;cursor:not-allowed;':'';
+    const click=agotado?'vNoStock()':'vAgregar('+p.id+')';
+    return '<div class="prod-btn" onclick="'+click+'" style="'+style+'">'
+      +stockBadge
+      +'<div class="prod-emoji">'+(p.emoji||'🛍️')+'</div>'
+      +'<div class="prod-name">'+p.nombre+'</div>'
+      +'<div class="prod-cat">'+(p.categoria||'')+'</div>'
+      +'<div class="prod-price">'+fm(p.precio)+'</div>'
+      +'</div>';
   }).join('');
 }
+
+function vNoStock(){toast('Sin stock — este producto no está disponible','err');}
 
 function vAgregar(pid){
   const p=DB.productos.find(x=>x.id===pid);if(!p)return;
