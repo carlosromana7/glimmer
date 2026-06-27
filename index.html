@@ -393,6 +393,7 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
     <div class="v-cart">
       <div class="v-cart-head">
         <div class="v-cart-title">🛒 Venta actual</div>
+        <div style="font-size:11px;color:var(--ink3);margin-top:4px;font-weight:500">Toca un producto para agregarlo →</div>
         <div style="margin-top:11px">
           <div style="font-size:10px;font-weight:700;color:var(--danger);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px">Cliente obligatorio *</div>
           <div style="display:flex;gap:8px;align-items:center">
@@ -1187,11 +1188,26 @@ function vRenderGrid(q=''){
   if(q) prods=prods.filter(p=>p.nombre.toLowerCase().includes(q.toLowerCase()));
   const grid=document.getElementById('v-grid');
   if(!prods.length){grid.innerHTML='<p style="color:var(--ink3);font-size:14px;padding:20px;font-weight:500">No hay productos</p>';return;}
-  grid.innerHTML=prods.map(p=>`<div class="prod-btn" onclick="vAgregar(${p.id})">${p.stock===0?'<div class="prod-low">Sin stock</div>':''}<div class="prod-emoji">${p.emoji||'🛍️'}</div><div class="prod-name">${p.nombre}</div><div class="prod-cat">${p.categoria||''}</div><div class="prod-price">${fm(p.precio)}</div></div>`).join('');
+  grid.innerHTML=prods.map(p=>{
+    const agotado=p.stock===0;
+    const stockBadge=agotado
+      ?'<div class="prod-low" style="background:#fdeaed;color:#c01830">SIN STOCK</div>'
+      :`<div style="position:absolute;top:7px;left:8px;background:rgba(107,45,94,.12);color:var(--plum);font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px">${p.stock} disp.</div>`;
+    return`<div class="prod-btn${agotado?' prod-agotado':''}" onclick="${agotado?'toast('Sin stock','err')':'vAgregar('+p.id+')'}" style="${agotado?'opacity:.5;cursor:not-allowed;':''}">
+      ${stockBadge}
+      <div class="prod-emoji">${p.emoji||'🛍️'}</div>
+      <div class="prod-name">${p.nombre}</div>
+      <div class="prod-cat">${p.categoria||''}</div>
+      <div class="prod-price">${fm(p.precio)}</div>
+    </div>`;
+  }).join('');
 }
 
 function vAgregar(pid){
   const p=DB.productos.find(x=>x.id===pid);if(!p)return;
+  if(p.stock===0){toast('Sin stock — no se puede vender','err');return;}
+  const enCarrito=(carrito.find(i=>i.id===pid)?.cantidad)||0;
+  if(enCarrito>=p.stock){toast('No hay más stock de "'+p.nombre+'" (máx. '+p.stock+')','err');return;}
   const ex=carrito.find(i=>i.id===pid);
   if(ex) ex.cantidad++;
   else carrito.push({id:p.id,nombre:p.nombre,emoji:p.emoji||'🛍️',cantidad:1,precio:p.precio,costo:p.costo||0});
@@ -1203,14 +1219,34 @@ function vAgregar(pid){
 function vRenderCart(){
   const cont=document.getElementById('v-items');
   if(!carrito.length){cont.innerHTML='<p style="color:var(--ink3);font-size:13px;text-align:center;padding:28px 0;font-weight:500">Toca un producto para agregar</p>';document.getElementById('v-total').textContent='Bs. 0.00';document.getElementById('v-pago').value='';document.getElementById('v-saldo').value='';return;}
-  cont.innerHTML=carrito.map((it,i)=>`<div class="v-item"><span class="v-item-name">${it.emoji} ${it.nombre}</span><div class="qty-ctrl"><button class="qty-btn" onclick="vQty(${i},-1)">−</button><span class="qty-n">${it.cantidad}</span><button class="qty-btn" onclick="vQty(${i},1)">+</button></div><span class="v-item-price">${fm(it.precio*it.cantidad)}</span></div>`).join('');
+  cont.innerHTML=carrito.map((it,i)=>{
+    const p=DB.productos.find(x=>x.id==it.id);
+    const stockInfo=p?` <small style="color:var(--ink3);font-size:10px">(${p.stock-it.cantidad} quedan)</small>`:'';
+    return`<div class="v-item">
+      <span class="v-item-name">${it.emoji} ${it.nombre}${stockInfo}</span>
+      <div class="qty-ctrl">
+        <button class="qty-btn" onclick="vQty(${i},-1)">−</button>
+        <span class="qty-n">${it.cantidad}</span>
+        <button class="qty-btn" onclick="vQty(${i},1)">+</button>
+      </div>
+      <span class="v-item-price">${fm(it.precio*it.cantidad)}</span>
+    </div>`;
+  }).join('');
   const tot=carrito.reduce((s,it)=>s+it.precio*it.cantidad,0);
   document.getElementById('v-total').textContent=fm(tot);
   document.getElementById('v-pago').placeholder=tot.toFixed(2);
   vSaldo();
 }
 
-function vQty(i,d){carrito[i].cantidad+=d;if(carrito[i].cantidad<=0)carrito.splice(i,1);vRenderCart();}
+function vQty(i,d){
+  const it=carrito[i];
+  const p=DB.productos.find(x=>x.id==it.id);
+  const maxStock=p?p.stock:999;
+  if(d>0&&it.cantidad>=maxStock){toast('Stock máximo: '+maxStock,'err');return;}
+  carrito[i].cantidad+=d;
+  if(carrito[i].cantidad<=0)carrito.splice(i,1);
+  vRenderCart();
+}
 
 function vSaldo(){
   const tot=carrito.reduce((s,it)=>s+it.precio*it.cantidad,0);
