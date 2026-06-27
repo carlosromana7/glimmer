@@ -644,6 +644,62 @@ function loadDB() {
   SB.url = cfg.url || SB.url;
   SB.key = cfg.key || SB.key;
 }
+
+// Cargar datos desde Supabase y sincronizar con localStorage
+async function syncFromSupabase(callback) {
+  if(!SB.url || !SB.key || !SESSION?.token || SESSION.token==='demo') {
+    if(callback) callback();
+    return;
+  }
+  try {
+    const headers = { apikey: SB.key, Authorization: 'Bearer ' + SESSION.token };
+    const [prods, clis, vens, pags] = await Promise.all([
+      fetch(`${SB.url}/rest/v1/productos?select=*&order=nombre`, {headers}).then(r=>r.json()),
+      fetch(`${SB.url}/rest/v1/clientes?select=*&order=nombre`, {headers}).then(r=>r.json()),
+      fetch(`${SB.url}/rest/v1/ventas?select=*&order=fecha.desc`, {headers}).then(r=>r.json()),
+      fetch(`${SB.url}/rest/v1/pagos?select=*`, {headers}).then(r=>r.json()),
+    ]);
+    if(Array.isArray(prods)) {
+      // Mapear columnas de Supabase al formato local
+      DB.productos = prods.map(p=>({
+        id: p.id, nombre: p.nombre, emoji: p.emoji||'🛍️',
+        imagen: p.imagen||'', categoria: p.categoria||'Otros',
+        costo: parseFloat(p.costo)||0, precio: parseFloat(p.precio)||0,
+        stock: parseInt(p.stock)||0, stock_min: parseInt(p.stock_min)||5
+      }));
+    }
+    if(Array.isArray(clis)) {
+      DB.clientes = clis.map(c=>({
+        id: c.id, nombre: c.nombre, telefono: c.telefono||'', creado_en: c.creado_en
+      }));
+    }
+    if(Array.isArray(vens)) {
+      // Cargar ventas con sus items del detalle
+      const detalles = await fetch(`${SB.url}/rest/v1/detalle_ventas?select=*`, {headers}).then(r=>r.json());
+      DB.ventas = vens.map(v=>({
+        id: v.id, cliente_id: v.cliente_id, fecha: v.fecha,
+        metodo: v.metodo_pago||'efectivo', nota: v.nota||'',
+        total: parseFloat(v.total)||0, costo_total: parseFloat(v.costo_total)||0,
+        items: Array.isArray(detalles) ? detalles.filter(d=>d.venta_id===v.id).map(d=>({
+          id: d.producto_id, nombre: d.nombre_producto,
+          cantidad: d.cantidad, precio: parseFloat(d.precio_unitario)||0,
+          costo: parseFloat(d.costo_unitario)||0
+        })) : []
+      }));
+    }
+    if(Array.isArray(pags)) {
+      DB.pagos = pags.map(p=>({
+        id: p.id, venta_id: p.venta_id, monto: parseFloat(p.monto)||0,
+        metodo: p.metodo||'efectivo', fecha: p.fecha, nota: p.nota||''
+      }));
+    }
+    saveDB(); // Guardar en localStorage como caché
+    if(callback) callback();
+  } catch(e) {
+    console.error('Sync error:', e);
+    if(callback) callback();
+  }
+}
 function saveDB() {
   localStorage.setItem('g3_prod', JSON.stringify(DB.productos));
   localStorage.setItem('g3_cli',  JSON.stringify(DB.clientes));
@@ -748,15 +804,25 @@ function showErr(m){const e=document.getElementById('login-err');e.textContent=m
 
 function entrarApp() {
   document.getElementById('s-login').classList.remove('active');
-  if(SESSION.role==='vendedora'){
-    document.getElementById('s-vendedora').classList.add('active');
-    document.getElementById('v-saludo').textContent='Hola '+SESSION.email.split('@')[0]+' 👋';
-    initVendedora();
-  } else {
-    document.getElementById('s-admin').classList.add('active');
-    document.getElementById('admin-email-lbl').textContent=SESSION.email.split('@')[0];
-    renderDashboard();
-  }
+  // Mostrar loading
+  const loadDiv = document.createElement('div');
+  loadDiv.id='app-loading';
+  loadDiv.style.cssText='position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:14px';
+  loadDiv.innerHTML='<div style="font-size:32px">✦</div><div style="font-size:14px;color:var(--ink-3);font-weight:600">Cargando Glimmer…</div>';
+  document.body.appendChild(loadDiv);
+
+  syncFromSupabase(() => {
+    document.getElementById('app-loading')?.remove();
+    if(SESSION.role==='vendedora'){
+      document.getElementById('s-vendedora').classList.add('active');
+      document.getElementById('v-saludo').textContent='Hola '+SESSION.email.split('@')[0]+' 👋';
+      initVendedora();
+    } else {
+      document.getElementById('s-admin').classList.add('active');
+      document.getElementById('admin-email-lbl').textContent=SESSION.email.split('@')[0];
+      renderDashboard();
+    }
+  });
 }
 
 function doLogout(){
@@ -778,8 +844,15 @@ function goTo(id) {
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   document.querySelector(`[onclick="goTo('${id}')"]`).classList.add('active');
-  const fn = {dashboard:renderDashboard,deudas:renderDeudas,clientes:()=>renderClientes(),productos:()=>renderProductos(),finanzas:renderFinanzas,reportes:renderReportes,config:loadConfigUI}[id];
-  if(fn) fn();
+  // Sincronizar con Supabase al navegar (excepto config)
+  if(id !== 'config') {
+    syncFromSupabase(() => {
+      const fn = {dashboard:renderDashboard,deudas:renderDeudas,clientes:()=>renderClientes(),productos:()=>renderProductos(),finanzas:renderFinanzas,reportes:renderReportes}[id];
+      if(fn) fn();
+    });
+  } else {
+    loadConfigUI();
+  }
 }
 function setPeriod(p,btn){
   periodoActual=p;
@@ -1059,7 +1132,7 @@ function exportarExcel(){
 // CONFIG
 // ═══════════════════════════════════════════
 function loadConfigUI(){document.getElementById('cfg-url').value=SB.url||'';document.getElementById('cfg-key').value=SB.key||'';}
-function guardarConfig(){SB.url=document.getElementById('cfg-url').value.trim();SB.key=document.getElementById('cfg-key').value.trim();localStorage.setItem('g3_cfg',JSON.stringify(SB));toast('✓ Guardado','ok');}
+function guardarConfig(){SB.url=document.getElementById('cfg-url').value.trim();SB.key=document.getElementById('cfg-key').value.trim();localStorage.setItem('g3_cfg',JSON.stringify(SB));toast('✓ Guardado — sincronizando…','ok');syncFromSupabase(()=>toast('✓ Datos sincronizados','ok'));}
 async function testConexion(){
   if(!SB.url||!SB.key){toast('Completa URL y Key','err');return;}
   try{
