@@ -555,17 +555,7 @@ CREATE POLICY "auth" ON pagos FOR ALL TO authenticated USING (true) WITH CHECK (
   <div class="modal-box">
     <div class="modal-head"><span class="modal-title">Nuevo producto</span><button class="btn-icon" onclick="cerrarModal('m-producto')"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
 
-    <!-- Imagen primero — lo más visual -->
-    <div class="form-row">
-      <label>Foto del producto</label>
-      <div class="img-upload-area" onclick="document.getElementById('mp-img').click()">
-        <div style="font-size:28px;margin-bottom:6px">📷</div>
-        <div style="font-size:13px;color:var(--ink-2);font-weight:600">Toca para subir imagen</div>
-        <div style="font-size:11px;color:var(--ink-3);margin-top:2px">JPG, PNG — máx. 2MB</div>
-        <input type="file" id="mp-img" accept="image/*" onchange="prevImagen(this)">
-      </div>
-      <div id="mp-img-preview"></div>
-    </div>
+    <input type="hidden" id="mp-img">
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px">
       <div><label>Nombre *</label><input type="text" id="mp-nombre" placeholder="Labial rojo…"></div>
@@ -600,19 +590,7 @@ CREATE POLICY "auth" ON pagos FOR ALL TO authenticated USING (true) WITH CHECK (
 
 <div id="toast"></div>
 
-<script>
-// Preview imagen antes de guardar
-function prevImagen(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById('mp-img-preview').innerHTML =
-      `<img src="${e.target.result}" style="width:80px;height:80px;object-fit:cover;border-radius:12px;border:2px solid var(--bg-2);margin-top:8px">`;
-  };
-  reader.readAsDataURL(file);
-}
-</script>
+
 
 <script>
 // ═══════════════════════════════════════════
@@ -1074,7 +1052,7 @@ function renderClientes(q=''){
 // ═══════════════════════════════════════════
 // PRODUCTOS
 // ═══════════════════════════════════════════
-function abrirModalProducto(){['mp-nombre','mp-costo','mp-precio','mp-stock','mp-emoji'].forEach(id=>document.getElementById(id).value='');document.getElementById('mp-smin').value='5';document.getElementById('mp-margen').textContent='';try{document.getElementById('mp-img-preview').innerHTML='';document.getElementById('mp-img').value='';}catch(e){}document.getElementById('m-producto').style.display='flex';}
+function abrirModalProducto(){['mp-nombre','mp-costo','mp-precio','mp-stock','mp-emoji'].forEach(id=>document.getElementById(id).value='');document.getElementById('mp-smin').value='5';document.getElementById('mp-margen').textContent='';document.getElementById('m-producto').style.display='flex';}
 function prevMargen(){const c=parseFloat(document.getElementById('mp-costo').value)||0,p=parseFloat(document.getElementById('mp-precio').value)||0,el=document.getElementById('mp-margen');if(p>0){const m=((p-c)/p*100).toFixed(1);el.textContent=`Margen: ${m}%`;el.style.color=m>=30?'var(--ok)':'var(--warn)';}else el.textContent='';}
 function guardarProducto(){
   const n=document.getElementById('mp-nombre').value.trim();if(!n){toast('Ingresa el nombre','err');return;}
@@ -1129,8 +1107,7 @@ function renderProductos(q=''){
   tb.innerHTML=lista.map(p=>{
     const m=p.precio?(((p.precio-p.costo)/p.precio)*100).toFixed(1):0;
     const est=p.stock===0?'<span class="badge badge-low">Sin stock</span>':p.stock<=p.stock_min?'<span class="badge badge-warn">Bajo</span>':'<span class="badge badge-ok">OK</span>';
-    const miniImg=p.imagen?`<img src="${p.imagen}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;margin-right:8px;vertical-align:middle" onerror="this.style.display='none'">`:`<span style="margin-right:6px">${p.emoji||'🛍️'}</span>`;
-    return`<tr><td><span style="display:flex;align-items:center">${miniImg}<strong>${p.nombre}</strong></span></td><td>${p.categoria}</td><td style="text-align:right">${fm(p.costo)}</td><td style="text-align:right">${fm(p.precio)}</td><td style="text-align:right;color:${m>=30?'var(--ok)':'var(--warn)'}">${m}%</td><td style="text-align:right">${p.stock}</td><td>${est}</td><td><button class="btn-icon" onclick="eliminarProducto(${p.id})"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></td></tr>`;
+        return`<tr><td><span style="display:flex;align-items:center"><span style="margin-right:8px;font-size:18px">${p.emoji||'🛍️'}</span><strong>${p.nombre}</strong></span></td><td>${p.categoria}</td><td style="text-align:right">${fm(p.costo)}</td><td style="text-align:right">${fm(p.precio)}</td><td style="text-align:right;color:${m>=30?'var(--ok)':'var(--warn)'}">${m}%</td><td style="text-align:right">${p.stock}</td><td>${est}</td><td><button class="btn-icon" onclick="eliminarProducto(${p.id})"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg></button></td></tr>`;
   }).join('');
 }
 function eliminarProducto(id){if(!confirm('¿Eliminar producto?'))return;DB.productos=DB.productos.filter(p=>p.id!==id);saveDB();renderProductos();toast('Producto eliminado');}
