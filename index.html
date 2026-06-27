@@ -331,6 +331,7 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
       <button class="nav-item" onclick="goTo('productos')"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg><span>Productos</span></button>
       <button class="nav-item" onclick="goTo('finanzas')"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>Finanzas</span></button>
       <button class="nav-item" onclick="goTo('reportes')"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Reportes</span></button>
+      <button class="nav-item" onclick="goTo('ventas')"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg><span>Ventas</span></button>
     </div>
     <div class="sb-foot"><span id="sb-user">admin</span><button id="btn-out" onclick="doLogout()">Salir</button></div>
   </aside>
@@ -379,7 +380,7 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
       </div>
       <div class="card">
         <div style="margin-bottom:13px"><input type="text" placeholder="Buscar…" oninput="rCli(this.value)" style="max-width:280px"></div>
-        <table><thead><tr><th>Nombre</th><th>Teléfono</th><th style="text-align:right">Compras</th><th style="text-align:right">Total</th><th style="text-align:right">Deuda</th><th>Tipo</th></tr></thead>
+        <table><thead><tr><th>Nombre</th><th>Teléfono</th><th style="text-align:right">Compras</th><th style="text-align:right">Total</th><th style="text-align:right">Deuda</th><th>Tipo</th><th></th></tr></thead>
         <tbody id="tb-cli"></tbody></table>
       </div>
     </div>
@@ -415,6 +416,25 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
         <tbody id="tb-rent"></tbody></table>
       </div>
       <div style="text-align:right"><button class="btn btn-ghost" onclick="exportXLS()">⬇ Exportar Excel</button></div>
+    </div>
+
+    <!-- VENTAS -->
+    <div id="page-ventas" class="page">
+      <div class="ph">
+        <div><h1>Ventas</h1><p>Registro completo de ventas</p></div>
+        <div class="tabs"><button class="tab active" onclick="setPer('dia',this)">Hoy</button><button class="tab" onclick="setPer('semana',this)">Semana</button><button class="tab" onclick="setPer('mes',this)">Mes</button><button class="tab" onclick="setPer('todo',this)">Todas</button></div>
+      </div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px">
+        <div class="kpi hi-plum"><div class="kpi-lbl">Total ventas</div><div class="kpi-val" id="vp-ing">Bs. 0</div><div class="kpi-sub" id="vp-num">0 ventas</div></div>
+        <div class="kpi"><div class="kpi-lbl">Cobrado</div><div class="kpi-val" id="vp-cob" style="color:var(--ok)">Bs. 0</div></div>
+        <div class="kpi"><div class="kpi-lbl">Pendiente</div><div class="kpi-val" id="vp-pen" style="color:var(--danger)">Bs. 0</div></div>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>#</th><th>Fecha y hora</th><th>Cliente</th><th>Productos</th><th>Método</th><th style="text-align:right">Total</th><th style="text-align:right">Pagado</th><th style="text-align:right">Saldo</th><th></th></tr></thead>
+          <tbody id="tb-ventas"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- REPORTES -->
@@ -669,7 +689,7 @@ function goTo(id) {
   document.getElementById('page-'+id).classList.add('active');
   document.querySelector(`[onclick="goTo('${id}')"]`).classList.add('active');
   syncAll().then(()=>{
-    ({dashboard:rDash,deudas:rDeudas,clientes:()=>rCli(),productos:()=>rProd(),finanzas:rFin,reportes:rRep})[id]?.();
+    ({dashboard:rDash,deudas:rDeudas,clientes:()=>rCli(),productos:()=>rProd(),finanzas:rFin,reportes:rRep,ventas:rVentas})[id]?.();
   });
 }
 
@@ -780,6 +800,38 @@ async function guardarCli(){
   return c;
 }
 
+async function editarCli(id){
+  const c=DB.clientes.find(x=>x.id===id);if(!c)return;
+  document.getElementById('mc-nombre').value=c.nombre;
+  document.getElementById('mc-tel').value=c.telefono||'';
+  document.getElementById('m-cli').style.display='flex';
+  // Cambiar botón guardar para editar
+  document.querySelector('#m-cli .btn-plum').textContent='Actualizar';
+  document.querySelector('#m-cli .btn-plum').onclick=()=>actualizarCli(id);
+}
+
+async function actualizarCli(id){
+  const n=document.getElementById('mc-nombre').value.trim();
+  if(!n){toast('Ingresa el nombre','err');return;}
+  const d={nombre:n,telefono:document.getElementById('mc-tel').value.trim()};
+  await fetch(`${SB_URL}/rest/v1/clientes?id=eq.${id}`,{method:'PATCH',headers:sbH(true),body:JSON.stringify(d)});
+  const c=DB.clientes.find(x=>x.id===id);
+  if(c){c.nombre=d.nombre;c.telefono=d.telefono;}
+  cerrar('m-cli');
+  // Restaurar botón
+  document.querySelector('#m-cli .btn-plum').textContent='Guardar';
+  document.querySelector('#m-cli .btn-plum').onclick=guardarCli;
+  rCli();toast('✓ Cliente actualizada','ok');
+}
+
+async function elimCli(id){
+  const c=DB.clientes.find(x=>x.id===id);
+  if(!confirm(`¿Eliminar a ${c?.nombre}?`))return;
+  await fetch(`${SB_URL}/rest/v1/clientes?id=eq.${id}`,{method:'DELETE',headers:sbH()});
+  DB.clientes=DB.clientes.filter(x=>x.id!==id);
+  rCli();toast('Cliente eliminada','ok');
+}
+
 function rCli(q=''){
   const tot=DB.clientes.length;
   const frec=DB.clientes.filter(c=>DB.ventas.filter(v=>v.cliente_id===c.id).length>2).length;
@@ -796,7 +848,7 @@ function rCli(q=''){
     const gastado=vs.reduce((s,v)=>s+v.total,0);
     const deuda=vs.reduce((s,v)=>s+saldoV(v),0);
     const tipo=vs.length>4?'<span class="badge b-ok">VIP</span>':vs.length>1?'<span class="badge b-blue">Frecuente</span>':'<span class="badge b-gray">Nueva</span>';
-    return`<tr><td><strong>${c.nombre}</strong></td><td>${c.telefono||'—'}</td><td style="text-align:right">${vs.length}</td><td style="text-align:right">${fm(gastado)}</td><td style="text-align:right">${deuda>0.01?`<span style="color:var(--danger);font-weight:700">${fm(deuda)}</span>`:'—'}</td><td>${tipo}</td></tr>`;
+    return`<tr><td><strong>${c.nombre}</strong></td><td>${c.telefono||'—'}</td><td style="text-align:right">${vs.length}</td><td style="text-align:right">${fm(gastado)}</td><td style="text-align:right">${deuda>0.01?`<span style="color:var(--danger);font-weight:700">${fm(deuda)}</span>`:'—'}</td><td>${tipo}</td><td style="white-space:nowrap"><button class="btn-icon" onclick="editarCli(${c.id})" title="Editar">✏️</button><button class="btn-icon" onclick="elimCli(${c.id})" title="Eliminar">🗑</button></td></tr>`;
   }).join('');
 }
 
@@ -901,6 +953,42 @@ function rRep(){
 // ═══════════════════════════════════
 // EXCEL
 // ═══════════════════════════════════
+function rVentas(){
+  const vs=filtrarP(DB.ventas,periodo);
+  const ing=vs.reduce((s,v)=>s+v.total,0);
+  const cob=vs.reduce((s,v)=>s+pagadoV(v),0);
+  const pen=vs.reduce((s,v)=>s+saldoV(v),0);
+  document.getElementById('vp-ing').textContent=fm(ing);
+  document.getElementById('vp-num').textContent=vs.length+' ventas';
+  document.getElementById('vp-cob').textContent=fm(cob);
+  document.getElementById('vp-pen').textContent=fm(pen);
+  const tb=document.getElementById('tb-ventas');
+  if(!vs.length){tb.innerHTML='<tr><td colspan="9" style="color:var(--ink3);text-align:center;padding:24px">Sin ventas en este período</td></tr>';return;}
+  tb.innerHTML=[...vs].reverse().map(v=>{
+    const cli=DB.clientes.find(c=>c.id===v.cliente_id);
+    const pag=pagadoV(v),sal=saldoV(v);
+    return`<tr>
+      <td style="color:var(--ink3);font-size:12px">#${String(v.id).slice(-4)}</td>
+      <td style="font-size:12px">${new Date(v.fecha).toLocaleDateString('es-BO',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</td>
+      <td>${cli?`<strong>${cli.nombre}</strong>`:'<span style="color:var(--ink3)">Sin cliente</span>'}</td>
+      <td style="font-size:12px;color:var(--ink2)">${v.items?.map(i=>i.nombre+'(×'+i.cantidad+')').join(', ')||'—'}</td>
+      <td><span class="badge b-blue">${v.metodo}</span></td>
+      <td style="text-align:right;font-weight:700">${fm(v.total)}</td>
+      <td style="text-align:right;color:var(--ok)">${fm(pag)}</td>
+      <td style="text-align:right">${sal>0.01?`<span style="color:var(--danger);font-weight:700">${fm(sal)}</span>`:'<span class="badge b-ok">✓</span>'}</td>
+      <td><button class="btn-icon" onclick="elimVenta(${v.id})" title="Eliminar">🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function elimVenta(id){
+  if(!confirm('¿Eliminar esta venta? También se eliminarán los pagos asociados.'))return;
+  await fetch(`${SB_URL}/rest/v1/ventas?id=eq.${id}`,{method:'DELETE',headers:sbH()});
+  DB.ventas=DB.ventas.filter(v=>v.id!==id);
+  DB.pagos=DB.pagos.filter(p=>p.venta_id!==id);
+  rVentas();rDash();toast('Venta eliminada','ok');
+}
+
 function exportXLS(){
   const wb=XLSX.utils.book_new();
   const vd=[['#','Fecha','Cliente','Productos','Método','Costo','Total','Pagado','Saldo']];
@@ -1051,7 +1139,14 @@ function vLimpiar(){
 // ═══════════════════════════════════
 // MODALES
 // ═══════════════════════════════════
-function cerrar(id){document.getElementById(id).style.display='none';}
+function cerrar(id){
+  document.getElementById(id).style.display='none';
+  // Restaurar botón guardar de cliente si fue editado
+  if(id==='m-cli'){
+    const btn=document.querySelector('#m-cli .btn-plum');
+    if(btn){btn.textContent='Guardar';btn.onclick=guardarCli;}
+  }
+}
 document.querySelectorAll('.modal-bg').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.style.display='none';});});
 
 // ═══════════════════════════════════
