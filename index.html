@@ -497,14 +497,14 @@ pre { background: var(--bg); border: 2px solid var(--bg-2); border-radius: 10px;
     <div id="page-config" class="page">
       <div class="page-header"><div><h1>Configuración</h1><p>Supabase y datos del sistema</p></div></div>
       <div style="background:var(--warn-bg);border-left:4px solid var(--warn);padding:13px 18px;margin-bottom:16px;font-size:12px;color:var(--warn);line-height:1.8;border-radius:0 10px 10px 0;font-weight:600">
-        <strong>Producción:</strong> Pega tu URL y Publishable Key → Guardar → Probar.<br>
-        Para imágenes: crea un bucket público llamado <code style="background:#fff;padding:1px 6px;border-radius:4px;color:var(--ink)">productos</code> en Supabase Storage.
+        <strong>Importante:</strong> En la Key usa la <strong>anon key</strong> que empieza con <code style="background:#fff;padding:1px 6px;border-radius:4px;color:var(--ink)">eyJ...</code> (pestaña Legacy en Supabase → Settings → API).<br>
+        NO uses la sb_publishable_ — esa no funciona para leer/escribir datos.
       </div>
       <div class="card mb16">
         <div class="sec-title">Supabase</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px">
-          <div><label>Project URL</label><input type="text" id="cfg-url" placeholder="https://xxxx.supabase.co"></div>
-          <div><label>Publishable Key</label><input type="password" id="cfg-key" placeholder="sb_publishable_..."></div>
+          <div><label>Project URL</label><input type="text" id="cfg-url" placeholder="https://xxxx.supabase.co" value="https://qkcxyhkmnkrkmtsmhlkl.supabase.co"></div>
+          <div><label>Publishable Key</label><input type="password" id="cfg-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></div>
         </div>
         <div style="display:flex;gap:10px">
           <button class="btn btn-primary btn-sm" onclick="guardarConfig()">Guardar</button>
@@ -626,9 +626,11 @@ const USERS_DEMO = {
 
 let DB = { productos:[], clientes:[], ventas:[], pagos:[] };
 // ── Credenciales Supabase (ya configuradas) ──
+// ── Supabase config ── la anon key (eyJ...) es la que funciona
+const _cfg = JSON.parse(localStorage.getItem('g3_cfg')||'{}');
 let SB = {
-  url: localStorage.getItem('g3_cfg') ? JSON.parse(localStorage.getItem('g3_cfg')).url || 'https://qkcxyhkmnkrkmtsmhlkl.supabase.co' : 'https://qkcxyhkmnkrkmtsmhlkl.supabase.co',
-  key: localStorage.getItem('g3_cfg') ? JSON.parse(localStorage.getItem('g3_cfg')).key || 'sb_publishable_47zDCi3Os0I8OL7LS8o-_w_P5NcQQSa' : 'sb_publishable_47zDCi3Os0I8OL7LS8o-_w_P5NcQQSa'
+  url: _cfg.url || 'https://qkcxyhkmnkrkmtsmhlkl.supabase.co',
+  key: _cfg.key || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFrY3h5aGttbmtya210c21obGtsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1MjcyNTEsImV4cCI6MjA5ODEwMzI1MX0.C48vYq8TZuKXr9EgnhEPKPsMWyicXn7q5T1maAzgXLk'  // La anon key eyJ... se ingresa en Configuración
 };
 let SESSION = null;
 let periodoActual = 'dia';
@@ -1369,8 +1371,33 @@ function vLimpiar(){
 // INIT
 // ═══════════════════════════════════════════
 loadDB();
-const saved=JSON.parse(localStorage.getItem('g3_session')||'null');
-if(saved?.role){SESSION=saved;entrarApp();}
+async function restoreSession() {
+  const saved = JSON.parse(localStorage.getItem('g3_session')||'null');
+  if(!saved?.role) return;
+  
+  // Si tiene refresh token y Supabase configurado, refrescar JWT
+  if(saved.refresh && SB.url && SB.key) {
+    try {
+      const r = await fetch(`${SB.url}/auth/v1/token?grant_type=refresh_token`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json', apikey:SB.key, Authorization:'Bearer '+SB.key},
+        body: JSON.stringify({refresh_token: saved.refresh})
+      });
+      const data = await r.json();
+      if(data.access_token) {
+        SESSION = {...saved, token: data.access_token, refresh: data.refresh_token};
+        localStorage.setItem('g3_session', JSON.stringify(SESSION));
+        entrarApp();
+        return;
+      }
+    } catch(e) { console.log('refresh failed', e); }
+  }
+  
+  // Usar sesión guardada directamente
+  SESSION = saved;
+  entrarApp();
+}
+restoreSession();
 </script>
 </body>
 </html>
