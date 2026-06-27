@@ -649,16 +649,20 @@ async function syncFromSupabase(callback) {
   try {
     const token = (SESSION?.token && SESSION.token !== 'demo') ? SESSION.token : SB.key;
     const headers = { apikey: SB.key, Authorization: 'Bearer ' + token };
-    console.log('🔄 Sincronizando desde Supabase...');
-    const [prods, clis, vens, pags] = await Promise.all([
-      fetch(`${SB.url}/rest/v1/productos?select=*&order=nombre`, {headers}).then(r=>r.json()),
-      fetch(`${SB.url}/rest/v1/clientes?select=*&order=nombre`, {headers}).then(r=>r.json()),
-      fetch(`${SB.url}/rest/v1/ventas?select=*&order=fecha.desc`, {headers}).then(r=>r.json()),
-      fetch(`${SB.url}/rest/v1/pagos?select=*`, {headers}).then(r=>r.json()),
-    ]);
-    console.log('📦 Productos:', Array.isArray(prods) ? prods.length : JSON.stringify(prods).slice(0,100));
-    console.log('👤 Token usado:', token.slice(0,30)+'...');
-    if(!Array.isArray(prods)) console.error('❌ Respuesta inesperada productos:', prods);
+    console.log('🔄 Sincronizando...', 'token:', token.slice(0,20)+'...');
+
+    const rProds = await fetch(`${SB.url}/rest/v1/productos?select=*&order=nombre`, {headers});
+    const prods = await rProds.json();
+    console.log('📦 Productos raw:', JSON.stringify(prods).slice(0,200));
+
+    const rClis = await fetch(`${SB.url}/rest/v1/clientes?select=*&order=nombre`, {headers});
+    const clis = await rClis.json();
+
+    const rVens = await fetch(`${SB.url}/rest/v1/ventas?select=*&order=fecha.desc`, {headers});
+    const vens = await rVens.json();
+
+    const rPags = await fetch(`${SB.url}/rest/v1/pagos?select=*`, {headers});
+    const pags = await rPags.json();
     if(Array.isArray(prods)) {
       // Mapear columnas de Supabase al formato local
       DB.productos = prods.map(p=>({
