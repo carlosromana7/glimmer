@@ -214,6 +214,11 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .loading-txt{font-size:13px;color:var(--ink3);font-weight:600}
 
+.cat-pill{padding:5px 12px;border-radius:20px;border:2px solid var(--line);background:var(--bg);cursor:pointer;font-size:12px;font-weight:600;color:var(--ink2);transition:all .15s;user-select:none}
+.cat-pill:hover{border-color:var(--mauve);background:var(--plum-lt)}
+.cat-pill.sel{background:var(--plum);border-color:var(--plum);color:#fff}
+.emoji-opt{font-size:22px;cursor:pointer;padding:4px;border-radius:8px;transition:background .15s;display:inline-block}
+.emoji-opt:hover{background:var(--plum-lt)}
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
 ::-webkit-scrollbar-thumb:hover{background:var(--mauve)}
@@ -574,8 +579,16 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
   <div class="modal-head"><span class="modal-title">Nuevo producto</span><button class="btn-icon" onclick="cerrar('m-prod')">✕</button></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
     <div><label>Nombre *</label><input type="text" id="mp-n" placeholder="Labial rojo…"></div>
-    <div><label>Categoría</label><select id="mp-cat"><option>Iluminador</option><option>Labiales</option><option>Base</option><option>Sombras</option><option>Rubor</option><option>Delineador</option><option>Rimer</option><option>Skincare</option><option>Perfumes</option><option>Accesorios</option></select></div>
-    <div><label>Emoji</label><input type="text" id="mp-emoji" placeholder="💄" maxlength="2" style="font-size:20px;text-align:center"></div>
+    <div style="grid-column:span 2">
+      <label>Categorías <span style="color:var(--ink3);font-weight:400">(selecciona hasta 2)</span></label>
+      <div id="cat-selector" style="display:flex;flex-wrap:wrap;gap:7px;margin-top:6px"><div class="cat-pill" data-cat="Labiales" data-emoji="💄" onclick="toggleCat(this)">💄 Labiales</div><div class="cat-pill" data-cat="Base" data-emoji="🧴" onclick="toggleCat(this)">🧴 Base</div><div class="cat-pill" data-cat="Sombras" data-emoji="👁️" onclick="toggleCat(this)">👁️ Sombras</div><div class="cat-pill" data-cat="Rubor" data-emoji="🌸" onclick="toggleCat(this)">🌸 Rubor</div><div class="cat-pill" data-cat="Iluminador" data-emoji="✨" onclick="toggleCat(this)">✨ Iluminador</div><div class="cat-pill" data-cat="Delineador" data-emoji="✏️" onclick="toggleCat(this)">✏️ Delineador</div><div class="cat-pill" data-cat="Máscara" data-emoji="🪄" onclick="toggleCat(this)">🪄 Máscara</div><div class="cat-pill" data-cat="Rimel" data-emoji="👁" onclick="toggleCat(this)">👁 Rimel</div><div class="cat-pill" data-cat="Skincare" data-emoji="💆" onclick="toggleCat(this)">💆 Skincare</div><div class="cat-pill" data-cat="Sérum de rostro" data-emoji="🫧" onclick="toggleCat(this)">🫧 Sérum de rostro</div><div class="cat-pill" data-cat="Sérum de cabello" data-emoji="💧" onclick="toggleCat(this)">💧 Sérum de cabello</div><div class="cat-pill" data-cat="Perfumes" data-emoji="🌺" onclick="toggleCat(this)">🌺 Perfumes</div><div class="cat-pill" data-cat="Accesorios" data-emoji="💍" onclick="toggleCat(this)">💍 Accesorios</div></div>
+      <input type="hidden" id="mp-cat" value="">
+    </div>
+    <div>
+      <label>Emoji del producto</label>
+      <input type="text" id="mp-emoji" placeholder="💄" maxlength="2" style="font-size:22px;text-align:center;margin-bottom:8px">
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><span class="emoji-opt" onclick="selEmoji('💄')" title="Labiales">💄</span><span class="emoji-opt" onclick="selEmoji('🧴')" title="Base">🧴</span><span class="emoji-opt" onclick="selEmoji('👁️')" title="Sombras">👁️</span><span class="emoji-opt" onclick="selEmoji('🌸')" title="Rubor">🌸</span><span class="emoji-opt" onclick="selEmoji('✨')" title="Iluminador">✨</span><span class="emoji-opt" onclick="selEmoji('✏️')" title="Delineador">✏️</span><span class="emoji-opt" onclick="selEmoji('🪄')" title="Máscara">🪄</span><span class="emoji-opt" onclick="selEmoji('👁')" title="Rimel">👁</span><span class="emoji-opt" onclick="selEmoji('💆')" title="Skincare">💆</span><span class="emoji-opt" onclick="selEmoji('🫧')" title="Sérum de rostro">🫧</span><span class="emoji-opt" onclick="selEmoji('💧')" title="Sérum de cabello">💧</span><span class="emoji-opt" onclick="selEmoji('🌺')" title="Perfumes">🌺</span><span class="emoji-opt" onclick="selEmoji('💍')" title="Accesorios">💍</span></div>
+    </div>
     <div><label>Costo (Bs.) *</label><input type="number" id="mp-costo" min="0" step="0.01" oninput="prevM()"></div>
     <div><label>Precio (Bs.) *</label><input type="number" id="mp-precio" min="0" step="0.01" oninput="prevM()"></div>
     <div><label>Stock inicial</label><input type="number" id="mp-stock" min="0" value="0"></div>
@@ -956,11 +969,41 @@ function rCli(q=''){
 // PRODUCTOS
 // ═══════════════════════════════════
 function abrirMProd(){
-  ['mp-n','mp-costo','mp-precio','mp-emoji'].forEach(id=>document.getElementById(id).value='');
+  ['mp-n','mp-costo','mp-precio','mp-emoji','mp-cat'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('mp-stock').value='0';
   document.getElementById('mp-smin').value='5';
   document.getElementById('mp-margen').textContent='';
+  resetCats();
   document.getElementById('m-prod').style.display='flex';
+}
+
+// Categorías disponibles con emojis
+const CATS_DATA = [("Labiales", "💄"), ("Base", "🧴"), ("Sombras", "👁️"), ("Rubor", "🌸"), ("Iluminador", "✨"), ("Delineador", "✏️"), ("Máscara", "🪄"), ("Rimel", "👁"), ("Skincare", "💆"), ("Sérum de rostro", "🫧"), ("Sérum de cabello", "💧"), ("Perfumes", "🌺"), ("Accesorios", "💍")];
+
+function toggleCat(el){
+  const sels=document.querySelectorAll('.cat-pill.sel');
+  if(el.classList.contains('sel')){
+    el.classList.remove('sel');
+  } else {
+    if(sels.length>=2){toast('Máximo 2 categorías','warn');return;}
+    el.classList.add('sel');
+    // Auto-sugerir emoji de la primera categoría seleccionada
+    if(sels.length===0){
+      document.getElementById('mp-emoji').value=el.dataset.emoji;
+    }
+  }
+  // Actualizar campo hidden
+  const vals=[...document.querySelectorAll('.cat-pill.sel')].map(p=>p.dataset.cat);
+  document.getElementById('mp-cat').value=vals.join(' / ');
+}
+
+function selEmoji(e){
+  document.getElementById('mp-emoji').value=e;
+}
+
+function resetCats(){
+  document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('sel'));
+  document.getElementById('mp-cat').value='';
 }
 
 function prevM(){
@@ -976,10 +1019,12 @@ async function guardarProd(){
   if(!n){toast('Ingresa el nombre','err');return;}
   const precio=parseFloat(document.getElementById('mp-precio').value)||0;
   if(!precio){toast('Ingresa el precio','err');return;}
+  const cat=document.getElementById('mp-cat').value;
+  if(!cat){toast('Selecciona al menos 1 categoría','err');return;}
   const prod={
     nombre:n,
     emoji:document.getElementById('mp-emoji').value||'🛍️',
-    categoria:document.getElementById('mp-cat').value,
+    categoria:cat,
     costo:parseFloat(document.getElementById('mp-costo').value)||0,
     precio,
     stock:parseInt(document.getElementById('mp-stock').value)||0,
@@ -1114,8 +1159,16 @@ let vCatAct='Todo';
 function initV(){carrito=[];cliSel=null;vCatAct='Todo';vRenderCats();vRenderGrid();vRenderCart();}
 
 function vRenderCats(){
-  const cats=['Todo',...new Set(DB.productos.map(p=>p.categoria).filter(Boolean))];
-  document.getElementById('v-cats').innerHTML=cats.map(c=>`<button class="v-cat${c===vCatAct?' active':''}" onclick="vSetCat('${c}')">${c}</button>`).join('');
+  // Expandir categorías compuestas "Labiales / Base" → ['Labiales','Base']
+  const allCats=new Set();
+  DB.productos.forEach(p=>{
+    if(p.categoria) p.categoria.split(' / ').forEach(c=>allCats.add(c.trim()));
+  });
+  const cats=['Todo',...allCats];
+  document.getElementById('v-cats').innerHTML=cats.map(c=>{
+    const emoji=CATS_DATA.find(x=>x[0]===c)?.[1]||'';
+    return`<button class="v-cat${c===vCatAct?' active':''}" onclick="vSetCat('${c}')">${emoji} ${c}</button>`;
+  }).join('');
 }
 
 function vSetCat(c){vCatAct=c;vRenderCats();vRenderGrid();}
@@ -1123,7 +1176,7 @@ function vFiltrar(q){vRenderGrid(q);}
 
 function vRenderGrid(q=''){
   let prods=DB.productos;
-  if(vCatAct!=='Todo') prods=prods.filter(p=>p.categoria===vCatAct);
+  if(vCatAct!=='Todo') prods=prods.filter(p=>p.categoria&&p.categoria.split(' / ').map(c=>c.trim()).includes(vCatAct));
   if(q) prods=prods.filter(p=>p.nombre.toLowerCase().includes(q.toLowerCase()));
   const grid=document.getElementById('v-grid');
   if(!prods.length){grid.innerHTML='<p style="color:var(--ink3);font-size:14px;padding:20px;font-weight:500">No hay productos</p>';return;}
