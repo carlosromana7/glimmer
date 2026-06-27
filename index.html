@@ -290,7 +290,10 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
       <div class="v-cart-head">
         <div class="v-cart-title">🛒 Venta actual</div>
         <div style="margin-top:11px">
-          <input type="text" id="v-cli-inp" placeholder="Buscar cliente…" oninput="vBuscarCli(this.value)" style="font-size:13px;padding:8px 14px;border-radius:20px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="text" id="v-cli-inp" placeholder="Buscar cliente…" oninput="vBuscarCli(this.value)" style="font-size:13px;padding:8px 14px;border-radius:20px;flex:1">
+            <button class="btn btn-ghost btn-sm" onclick="abrirMCliV()" title="Nueva cliente" style="white-space:nowrap;flex-shrink:0">+ Nueva</button>
+          </div>
           <div id="v-cli-suger" style="display:none;background:var(--white);border:2px solid var(--line);border-radius:10px;overflow:hidden;margin-top:5px"></div>
           <div id="v-cli-sel" style="display:none;margin-top:7px"></div>
         </div>
@@ -769,6 +772,11 @@ async function guardarCli(){
   const c={...d,id,creado_en:new Date().toISOString()};
   DB.clientes.push(c);cerrar('m-cli');toast('✓ Cliente guardada','ok');
   if(document.getElementById('page-clientes').classList.contains('active'))rCli();
+  // Si vinimos desde la pantalla de vendedora, seleccionar automáticamente
+  if(window._desde_vendedora){
+    window._desde_vendedora = false;
+    vSelCli(id);
+  }
   return c;
 }
 
@@ -966,8 +974,11 @@ function vBuscarCli(q){
   const div=document.getElementById('v-cli-suger');
   if(!q){div.innerHTML='';div.style.display='none';return;}
   const res=DB.clientes.filter(c=>c.nombre.toLowerCase().includes(q.toLowerCase())||c.telefono?.includes(q));
-  if(!res.length){div.innerHTML='';div.style.display='none';return;}
   div.style.display='block';
+  if(!res.length){
+    div.innerHTML=`<div class="suger-item" style="color:var(--ink3)">Sin resultados — <span style="color:var(--plum);cursor:pointer;font-weight:700" onclick="abrirMCliV()">+ Crear cliente "${q}"</span></div>`;
+    return;
+  }
   div.innerHTML=res.slice(0,5).map(c=>`<div class="suger-item" onclick="vSelCli(${c.id})">${c.nombre} <span style="color:var(--ink3)">${c.telefono||''}</span></div>`).join('');
 }
 
@@ -975,12 +986,19 @@ function vSelCli(id){
   const c=DB.clientes.find(x=>x.id===id);if(!c)return;
   cliSel=c;
   document.getElementById('v-cli-inp').value='';
+  document.getElementById('v-cli-suger').innerHTML='';
   document.getElementById('v-cli-suger').style.display='none';
   document.getElementById('v-cli-sel').style.display='block';
-  document.getElementById('v-cli-sel').innerHTML=`<div class="cli-pill">${c.nombre}${c.telefono?' · '+c.telefono:''}<button onclick="vDeselCli()">×</button></div>`;
+  document.getElementById('v-cli-sel').innerHTML=`<div class="cli-pill">👤 ${c.nombre}${c.telefono?' · '+c.telefono:''}<button onclick="vDeselCli()">×</button></div>`;
 }
 
 function vDeselCli(){cliSel=null;document.getElementById('v-cli-sel').style.display='none';}
+
+function abrirMCliV(){
+  // Guardar referencia para saber que venimos de vendedora
+  window._desde_vendedora = true;
+  abrirMCli();
+}
 
 async function vRegistrar(){
   if(!carrito.length){toast('Agrega al menos un producto','err');return;}
