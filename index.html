@@ -707,6 +707,19 @@ function saveDB() {
   localStorage.setItem('g3_pag',  JSON.stringify(DB.pagos));
 }
 
+// ── Helpers Supabase REST ──
+function sbHeaders() {
+  return { 'Content-Type':'application/json', apikey:SB.key, Authorization:'Bearer '+(SESSION?.token||SB.key), Prefer:'return=representation' };
+}
+function sbPost(table, data) {
+  if(!SB.url||!SB.key||!SESSION?.token||SESSION.token==='demo') return Promise.resolve(null);
+  return fetch(`${SB.url}/rest/v1/${table}`, { method:'POST', headers:sbHeaders(), body:JSON.stringify(data) }).then(r=>r.json()).catch(e=>{console.error('sbPost error',e);return null;});
+}
+function sbPatch(table, id, data) {
+  if(!SB.url||!SB.key||!SESSION?.token||SESSION.token==='demo') return Promise.resolve(null);
+  return fetch(`${SB.url}/rest/v1/${table}?id=eq.${id}`, { method:'PATCH', headers:sbHeaders(), body:JSON.stringify(data) }).then(r=>r.json()).catch(e=>{console.error('sbPatch error',e);return null;});
+}
+
 // ═══════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════
@@ -964,11 +977,14 @@ function guardarAbono(){
   const v=DB.ventas.find(x=>x.id===abonoVentaId);
   const saldo=saldoVenta(v);
   if(monto>saldo+0.01){toast('El abono supera el saldo ('+fm(saldo)+')','err');return;}
-  DB.pagos.push({id:Date.now(),venta_id:abonoVentaId,monto,metodo:document.getElementById('abono-metodo').value,fecha:new Date().toISOString(),nota:document.getElementById('abono-nota').value.trim()});
-  saveDB();
-  cerrarModal('m-abono');
-  toast('✓ Abono registrado — '+fm(monto),'ok');
-  renderDeudas();
+  const pagoData={venta_id:abonoVentaId,monto,metodo:document.getElementById('abono-metodo').value,nota:document.getElementById('abono-nota').value.trim()};
+  sbPost('pagos',pagoData).then(res=>{
+    const pid=Array.isArray(res)&&res[0]?res[0].id:Date.now();
+    DB.pagos.push({...pagoData,id:pid,fecha:new Date().toISOString()});
+    saveDB();cerrarModal('m-abono');
+    toast('✓ Abono registrado — '+fm(monto),'ok');
+    renderDeudas();
+  });
 }
 
 // ═══════════════════════════════════════════
@@ -978,11 +994,18 @@ function abrirModalCliente(){document.getElementById('mc-nombre').value='';docum
 function guardarCliente(){
   const n=document.getElementById('mc-nombre').value.trim();
   if(!n){toast('Ingresa el nombre','err');return;}
-  const c={id:Date.now(),nombre:n,telefono:document.getElementById('mc-tel').value.trim(),creado_en:new Date().toISOString()};
-  DB.clientes.push(c);saveDB();cerrarModal('m-cliente');
-  toast('✓ Cliente guardada','ok');
-  if(document.getElementById('page-clientes').classList.contains('active'))renderClientes();
-  return c;
+  const cData={nombre:n,telefono:document.getElementById('mc-tel').value.trim()};
+  sbPost('clientes', cData).then(res=>{
+    const sbId=Array.isArray(res)&&res[0]?res[0].id:Date.now();
+    const c={...cData,id:sbId,creado_en:new Date().toISOString()};
+    DB.clientes.push(c);saveDB();cerrarModal('m-cliente');
+    toast('✓ Cliente guardada','ok');
+    if(document.getElementById('page-clientes').classList.contains('active'))renderClientes();
+    // Si estamos en nueva venta seleccionar automáticamente
+    if(document.getElementById('page-nueva-venta')?.classList.contains('active'))seleccionarCliente?.(c.id);
+    // Para vendedora
+    if(document.getElementById('s-vendedora').classList.contains('active'))vSelCliente(c.id);
+  });
 }
 function renderClientes(q=''){
   const tot=DB.clientes.length;
@@ -1014,8 +1037,8 @@ function guardarProducto(){
   const p=parseFloat(document.getElementById('mp-precio').value)||0;if(!p){toast('Ingresa el precio','err');return;}
   const imgFile = document.getElementById('mp-img').files[0];
   const saveProduct = (imgUrl) => {
-    DB.productos.push({
-      id:Date.now(), nombre:n,
+    const prod = {
+      nombre:n,
       emoji: document.getElementById('mp-emoji').value||'🛍️',
       imagen: imgUrl||'',
       categoria: document.getElementById('mp-cat').value,
@@ -1023,10 +1046,15 @@ function guardarProducto(){
       precio: p,
       stock: parseInt(document.getElementById('mp-stock').value)||0,
       stock_min: parseInt(document.getElementById('mp-smin').value)||5
+    };
+    // Guardar en Supabase si está disponible
+    sbPost('productos', prod).then(res => {
+      const sbId = Array.isArray(res) && res[0] ? res[0].id : Date.now();
+      DB.productos.push({...prod, id: sbId});
+      saveDB(); cerrarModal('m-producto'); renderProductos();
+      if(SESSION?.role==='vendedora') vRenderGrid();
+      toast('✓ Producto guardado','ok');
     });
-    saveDB(); cerrarModal('m-producto'); renderProductos();
-    if(SESSION?.role==='vendedora') vRenderGrid();
-    toast('✓ Producto guardado','ok');
   };
   if(imgFile && SB.url && SB.key) {
     const fname = Date.now()+'_'+imgFile.name.replace(/[^a-zA-Z0-9._-]/g,'_');
