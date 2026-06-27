@@ -496,7 +496,7 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
       <div class="ph"><div><h1>Productos</h1><p>Catálogo e inventario</p></div><button class="btn btn-plum" onclick="abrirMProd()">+ Nuevo producto</button></div>
       <div style="margin-bottom:13px"><input type="text" placeholder="Buscar…" oninput="rProd(this.value)" style="max-width:280px"></div>
       <div class="card">
-        <table><thead><tr><th>Producto</th><th>Categoría</th><th style="text-align:right">Costo</th><th style="text-align:right">Precio</th><th style="text-align:right">Margen</th><th style="text-align:right">Stock</th><th>Estado</th><th></th></tr></thead>
+        <table><thead><tr><th>Producto</th><th>Categoría</th><th style="text-align:right">Costo</th><th style="text-align:right">Precio</th><th style="text-align:right">Margen</th><th style="text-align:right">Stock</th><th>Estado</th><th style="text-align:center">Acciones</th></tr></thead>
         <tbody id="tb-prod"></tbody></table>
       </div>
     </div>
@@ -1055,8 +1055,35 @@ function rProd(q=''){
   tb.innerHTML=lista.map(p=>{
     const m=p.precio?(((p.precio-p.costo)/p.precio)*100).toFixed(1):0;
     const est=p.stock===0?'<span class="badge b-bad">Sin stock</span>':'<span class="badge b-ok">OK</span>';
-    return`<tr><td><span style="display:flex;align-items:center;gap:7px"><span style="font-size:18px">${p.emoji||'🛍️'}</span><strong>${p.nombre}</strong></span></td><td>${p.categoria}</td><td style="text-align:right">${fm(p.costo)}</td><td style="text-align:right">${fm(p.precio)}</td><td style="text-align:right;color:${m>=30?'var(--ok)':'var(--warn)'}">${m}%</td><td style="text-align:right">${p.stock}</td><td>${est}</td><td><button class="btn-icon" onclick="elimProd(${p.id})" title="Eliminar">🗑</button></td></tr>`;
+    return`<tr>
+  <td><span style="display:flex;align-items:center;gap:7px"><span style="font-size:18px">${p.emoji||'🛍️'}</span><strong>${p.nombre}</strong></span></td>
+  <td>${p.categoria}</td>
+  <td style="text-align:right">${fm(p.costo)}</td>
+  <td style="text-align:right">${fm(p.precio)}</td>
+  <td style="text-align:right;color:${m>=30?'var(--ok)':'var(--warn)'}">${m}%</td>
+  <td style="text-align:right;font-weight:700;color:${p.stock===0?'var(--danger)':'var(--ink)'}">${p.stock}</td>
+  <td>${est}</td>
+  <td style="white-space:nowrap">
+    <button class="btn btn-ok btn-sm" onclick="abastecer(${p.id})" title="Agregar stock">+ Stock</button>
+    <button class="btn-icon" onclick="elimProd(${p.id})" title="Eliminar">🗑</button>
+  </td>
+</tr>`;
   }).join('');
+}
+
+async function abastecer(id){
+  const p = DB.productos.find(x=>x.id===id);
+  if(!p) return;
+  const cant = prompt(`¿Cuántas unidades agregar a "${p.nombre}"?
+Stock actual: ${p.stock}`);
+  if(cant===null) return; // canceló
+  const n = parseInt(cant);
+  if(isNaN(n)||n<=0){ toast('Ingresa un número válido','err'); return; }
+  const nuevoStock = p.stock + n;
+  await sbUpdate('productos', id, {stock: nuevoStock});
+  p.stock = nuevoStock;
+  rProd();
+  toast(`✓ Stock actualizado — ${p.nombre}: ${nuevoStock} unidades`, 'ok');
 }
 
 async function elimProd(id){
@@ -1135,11 +1162,28 @@ function rVentas(){
 }
 
 async function elimVenta(id){
-  if(!confirm('¿Eliminar esta venta? También se eliminarán los pagos asociados.'))return;
+  if(!confirm('¿Eliminar esta venta? El stock de los productos se devolverá automáticamente.'))return;
+  
+  // Devolver stock de los productos vendidos
+  const v = DB.ventas.find(x=>x.id===id);
+  if(v && v.items) {
+    for(const it of v.items) {
+      const prod = DB.productos.find(p=>p.id==it.id);
+      if(prod) {
+        const nuevoStock = (prod.stock||0) + it.cantidad;
+        await sbUpdate('productos', prod.id, {stock: nuevoStock});
+        prod.stock = nuevoStock;
+      }
+    }
+  }
+  
+  // Eliminar venta (cascada elimina detalle y pagos por FK)
   await fetch(`${SB_URL}/rest/v1/ventas?id=eq.${id}`,{method:'DELETE',headers:sbH()});
-  DB.ventas=DB.ventas.filter(v=>v.id!==id);
-  DB.pagos=DB.pagos.filter(p=>p.venta_id!==id);
-  rVentas();rDash();toast('Venta eliminada','ok');
+  DB.ventas = DB.ventas.filter(v=>v.id!==id);
+  DB.pagos  = DB.pagos.filter(p=>p.venta_id!==id);
+  
+  rVentas(); rDash();
+  toast('✓ Venta eliminada — stock devuelto','ok');
 }
 
 function exportXLS(){
