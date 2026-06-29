@@ -528,7 +528,12 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
     <div id="page-ventas" class="page">
       <div class="ph">
         <div><h1>Ventas</h1><p>Registro completo de ventas</p></div>
-        <div class="tabs"><button class="tab active" onclick="setPer('dia',this)">Hoy</button><button class="tab" onclick="setPer('semana',this)">Semana</button><button class="tab" onclick="setPer('mes',this)">Mes</button><button class="tab" onclick="setPer('todo',this)">Todas</button></div>
+        <div class="tabs" id="tabs-ventas">
+          <button class="tab" onclick="setPerV('dia',this)">Hoy</button>
+          <button class="tab" onclick="setPerV('semana',this)">Semana</button>
+          <button class="tab" onclick="setPerV('mes',this)">Mes</button>
+          <button class="tab active" onclick="setPerV('todo',this)">Todas</button>
+        </div>
       </div>
       <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px">
         <div class="kpi hi-plum"><div class="kpi-lbl">Total ventas</div><div class="kpi-val" id="vp-ing">Bs. 0</div><div class="kpi-sub" id="vp-num">0 ventas</div></div>
@@ -1283,8 +1288,17 @@ function rRep(){
 // ═══════════════════════════════════
 // EXCEL
 // ═══════════════════════════════════
+let periodoVentas = 'todo'; // Ventas muestra todas por defecto
+
+function setPerV(p, btn) {
+  periodoVentas = p;
+  document.querySelectorAll('#tabs-ventas .tab').forEach(t=>t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  rVentas();
+}
+
 function rVentas(){
-  const vs=filtrarP(DB.ventas,periodo);
+  const vs=filtrarP(DB.ventas, periodoVentas);
   const ing=vs.reduce((s,v)=>s+v.total,0);
   const cob=vs.reduce((s,v)=>s+pagadoV(v),0);
   const pen=vs.reduce((s,v)=>s+saldoV(v),0);
