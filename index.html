@@ -505,63 +505,54 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
     <div id="page-finanzas" class="page">
       <div class="ph">
         <div><h1>💰 Finanzas</h1><p>Tu dinero — cuánto entra, cuánto sale, cuánto tienes</p></div>
-        <div class="tabs"><button class="tab active" onclick="setPer('dia',this)">Hoy</button><button class="tab" onclick="setPer('semana',this)">Semana</button><button class="tab" onclick="setPer('mes',this)">Mes</button><button class="tab" onclick="setPer('todo',this)">Todo</button></div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:18px">
-        <div class="fin inv"><div class="fin-lbl">Costo de lo vendido</div><div class="fin-val" id="f-inv">Bs. 0</div><div class="fin-sub">en el período</div></div>
-        <div class="fin gan"><div class="fin-lbl">Ganancia bruta</div><div class="fin-val" id="f-gan">Bs. 0</div><div class="fin-sub" id="f-gan-s"></div></div>
-        <div class="fin mar"><div class="fin-lbl">Margen real</div><div class="fin-val" id="f-mar">0%</div><div class="fin-sub">sobre ingresos</div></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:18px">
-        <div class="fin" style="border-left:4px solid var(--plum)">
-          <div class="fin-lbl">💰 Total invertido en mercadería</div>
-          <div class="fin-val" id="f-inv-acum" style="color:var(--plum)">Bs. 0</div>
-          <div class="fin-sub">acumulado histórico en reposiciones</div>
-        </div>
-        <div class="fin" style="border-left:4px solid #C090B0">
-          <div class="fin-lbl">📦 Valor del stock en bodega</div>
-          <div class="fin-val" id="f-stock-val" style="color:#8B3A78">Bs. 0</div>
-          <div class="fin-sub">stock actual × costo actual por producto</div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="tabs" id="tabs-fin">
+            <button class="tab" onclick="setPerFin('dia',this)">Hoy</button>
+            <button class="tab" onclick="setPerFin('semana',this)">Semana</button>
+            <button class="tab" onclick="setPerFin('mes',this)">Mes</button>
+            <button class="tab active" onclick="setPerFin('todo',this)">Todo</button>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="exportXLS()">⬇ Excel</button>
         </div>
       </div>
-      <div class="g2 mb15">
-        <div class="card"><div class="card-title">Ingresos vs Costos</div><div class="chart-wrap"><canvas id="ch-fb"></canvas></div></div>
-        <div class="card"><div class="card-title">Métodos de pago</div><div class="chart-wrap"><canvas id="ch-fm"></canvas></div></div>
-      </div>
-      <div class="card mb15">
-        <div class="card-title">Rentabilidad por producto</div>
-        <table><thead><tr><th>Producto</th><th style="text-align:right">Unidades</th><th style="text-align:right">Ingresos</th><th style="text-align:right">Costos</th><th style="text-align:right">Ganancia</th><th style="text-align:right">Margen</th></tr></thead>
-        <tbody id="tb-rent"></tbody></table>
-      </div>
-      <div class="card mb15">
-        <div class="card-title">📋 Historial de reposiciones de stock</div>
-        <table><thead><tr><th>Fecha</th><th>Producto</th><th style="text-align:right">Cantidad</th><th style="text-align:right">Costo unit.</th><th style="text-align:right">Total pagado</th><th>Nota</th></tr></thead>
-        <tbody id="tb-repos"></tbody></table>
-      </div>
-      <div style="text-align:right"><button class="btn btn-ghost" onclick="exportXLS()">⬇ Exportar Excel</button></div>
-    </div>
 
-    <!-- VENTAS -->
-    <div id="page-ventas" class="page">
-      <div class="ph">
-        <div><h1>Ventas</h1><p>Registro completo de ventas</p></div>
-        <div class="tabs" id="tabs-ventas">
-          <button class="tab" onclick="setPerV('dia',this)">Hoy</button>
-          <button class="tab" onclick="setPerV('semana',this)">Semana</button>
-          <button class="tab" onclick="setPerV('mes',this)">Mes</button>
-          <button class="tab active" onclick="setPerV('todo',this)">Todas</button>
+      <div style="font-size:10px;font-weight:700;color:var(--ink3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">📈 LO QUE ENTRÓ</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:20px">
+        <div class="fin gan"><div class="fin-lbl">Ingresos totales</div><div class="fin-val" id="f-ing">Bs. 0</div><div class="fin-sub" id="f-ing-s">0 ventas</div></div>
+        <div class="fin gan"><div class="fin-lbl">Ganancia neta</div><div class="fin-val" id="f-gan">Bs. 0</div><div class="fin-sub" id="f-gan-s"></div></div>
+        <div class="fin mar"><div class="fin-lbl">Margen real</div><div class="fin-val" id="f-mar">0%</div><div class="fin-sub">de cada Bs. vendido</div></div>
+      </div>
+
+      <div style="font-size:10px;font-weight:700;color:var(--ink3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">📉 LO QUE SALIÓ</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:20px">
+        <div class="fin inv"><div class="fin-lbl">Costo de lo vendido</div><div class="fin-val" id="f-inv">Bs. 0</div><div class="fin-sub">en el período</div></div>
+        <div class="fin" style="border-left:4px solid var(--plum)"><div class="fin-lbl">💰 Total invertido (acumulado)</div><div class="fin-val" id="f-inv-acum" style="color:var(--plum)">Bs. 0</div><div class="fin-sub">toda la historia de compras</div></div>
+        <div class="fin deu"><div class="fin-lbl">Por cobrar</div><div class="fin-val" id="f-cobrar">Bs. 0</div><div class="fin-sub" id="f-cobrar-s">clientes con deuda</div></div>
+      </div>
+
+      <div style="font-size:10px;font-weight:700;color:var(--ink3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">📦 LO QUE TIENES AHORA</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:20px">
+        <div class="fin" style="border-left:4px solid #C090B0">
+          <div class="fin-lbl">Valor del stock en bodega</div>
+          <div class="fin-val" id="f-stock-val" style="color:#8B3A78">Bs. 0</div>
+          <div class="fin-sub">capital congelado en mercadería</div>
+        </div>
+        <div class="fin" style="border-left:4px solid var(--ok)">
+          <div class="fin-lbl">Ganancia si vendes todo el stock</div>
+          <div class="fin-val" id="f-stock-gan" style="color:var(--ok)">Bs. 0</div>
+          <div class="fin-sub">potencial si se vende todo</div>
         </div>
       </div>
-      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px">
-        <div class="kpi hi-plum"><div class="kpi-lbl">Total ventas</div><div class="kpi-val" id="vp-ing">Bs. 0</div><div class="kpi-sub" id="vp-num">0 ventas</div></div>
-        <div class="kpi"><div class="kpi-lbl">Cobrado</div><div class="kpi-val" id="vp-cob" style="color:var(--ok)">Bs. 0</div></div>
-        <div class="kpi"><div class="kpi-lbl">Pendiente</div><div class="kpi-val" id="vp-pen" style="color:var(--danger)">Bs. 0</div></div>
+
+      <div class="g2 mb15">
+        <div class="card"><div class="card-title">Ingresos vs Costos por día</div><div class="chart-wrap"><canvas id="ch-fin-b"></canvas></div></div>
+        <div class="card"><div class="card-title">Métodos de pago</div><div class="chart-wrap"><canvas id="ch-fin-m"></canvas></div></div>
       </div>
-      <div class="card">
-        <table>
-          <thead><tr><th>#</th><th>Fecha y hora</th><th>Cliente</th><th>Productos</th><th>Método</th><th style="text-align:right">Total</th><th style="text-align:right">Pagado</th><th style="text-align:right">Saldo</th><th></th></tr></thead>
-          <tbody id="tb-ventas"></tbody>
-        </table>
+
+      <div class="card mb15">
+        <div class="card-title">📋 Historial de inversiones en stock (reposiciones)</div>
+        <table><thead><tr><th>Fecha</th><th>Producto</th><th style="text-align:right">Cantidad</th><th style="text-align:right">Costo unit.</th><th style="text-align:right">Total invertido</th><th>Nota</th></tr></thead>
+        <tbody id="tb-repos"></tbody></table>
       </div>
     </div>
 
@@ -569,7 +560,12 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
     <div id="page-reportes" class="page">
       <div class="ph">
         <div><h1>📊 Análisis</h1><p>Qué funciona, qué necesitas reponer, patrones</p></div>
-        <div class="tabs"><button class="tab active" onclick="setPer('dia',this)">Hoy</button><button class="tab" onclick="setPer('semana',this)">Semana</button><button class="tab" onclick="setPer('mes',this)">Mes</button><button class="tab" onclick="setPer('todo',this)">Todo</button></div>
+        <div class="tabs" id="tabs-rep">
+          <button class="tab" onclick="setPerRep('dia',this)">Hoy</button>
+          <button class="tab" onclick="setPerRep('semana',this)">Semana</button>
+          <button class="tab" onclick="setPerRep('mes',this)">Mes</button>
+          <button class="tab active" onclick="setPerRep('todo',this)">Todo</button>
+        </div>
       </div>
 
       <!-- Rankings -->
@@ -1184,7 +1180,7 @@ async function elimProd(id){
 // FINANZAS
 // ═══════════════════════════════════
 function rFin(){
-  const vs=filtrarP(DB.ventas,periodo);
+  const vs=filtrarP(DB.ventas,periodoFin);
   const ing=vs.reduce((s,v)=>s+v.total,0);
   const cos=vs.reduce((s,v)=>s+(v.costo_total||0),0);
   const gan=ing-cos;
@@ -1227,7 +1223,7 @@ function rFin(){
 // REPORTES
 // ═══════════════════════════════════
 function rRep(){
-  const vs = filtrarP(DB.ventas, periodo);
+  const vs = filtrarP(DB.ventas, periodoRep);
   const ing = vs.reduce((s,v)=>s+v.total,0);
   const cos = vs.reduce((s,v)=>s+(v.costo_total||0),0);
   const gan = ing-cos;
@@ -1361,7 +1357,23 @@ function rRep(){
 // ═══════════════════════════════════
 // EXCEL
 // ═══════════════════════════════════
-let periodoVentas = 'todo'; // Ventas muestra todas por defecto
+let periodoVentas = 'todo';
+let periodoFin = 'todo';
+let periodoRep = 'todo';
+
+function setPerFin(p, btn) {
+  periodoFin = p;
+  document.querySelectorAll('#tabs-fin .tab').forEach(t=>t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  rFin();
+}
+
+function setPerRep(p, btn) {
+  periodoRep = p;
+  document.querySelectorAll('#tabs-rep .tab').forEach(t=>t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  rRep();
+}
 
 function setPerV(p, btn) {
   periodoVentas = p;
