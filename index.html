@@ -615,6 +615,31 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
 
     </div>
 
+
+    <!-- VENTAS -->
+    <div id="page-ventas" class="page">
+      <div class="ph">
+        <div><h1>🛒 Ventas</h1><p>Registro completo de todas las ventas</p></div>
+        <div class="tabs" id="tabs-ventas">
+          <button class="tab" onclick="setPerV('dia',this)">Hoy</button>
+          <button class="tab" onclick="setPerV('semana',this)">Semana</button>
+          <button class="tab" onclick="setPerV('mes',this)">Mes</button>
+          <button class="tab active" onclick="setPerV('todo',this)">Todas</button>
+        </div>
+      </div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px">
+        <div class="kpi hi-plum"><div class="kpi-lbl">Total ventas</div><div class="kpi-val" id="vp-ing">Bs. 0</div><div class="kpi-sub" id="vp-num">0 ventas</div></div>
+        <div class="kpi"><div class="kpi-lbl">Cobrado</div><div class="kpi-val" id="vp-cob" style="color:var(--ok)">Bs. 0</div></div>
+        <div class="kpi"><div class="kpi-lbl">Pendiente</div><div class="kpi-val" id="vp-pen" style="color:var(--danger)">Bs. 0</div></div>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>#</th><th>Fecha y hora</th><th>Cliente</th><th>Productos</th><th>Método</th><th style="text-align:right">Total</th><th style="text-align:right">Pagado</th><th style="text-align:right">Saldo</th><th></th></tr></thead>
+          <tbody id="tb-ventas"></tbody>
+        </table>
+      </div>
+    </div>
+
   </main>
 </div>
 
