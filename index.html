@@ -507,10 +507,22 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
         <div><h1>Finanzas</h1><p>Inversión y ganancias</p></div>
         <div class="tabs"><button class="tab active" onclick="setPer('dia',this)">Hoy</button><button class="tab" onclick="setPer('semana',this)">Semana</button><button class="tab" onclick="setPer('mes',this)">Mes</button><button class="tab" onclick="setPer('todo',this)">Todo</button></div>
       </div>
-      <div class="fin-grid">
-        <div class="fin inv"><div class="fin-lbl">Invertido</div><div class="fin-val" id="f-inv">Bs. 0</div><div class="fin-sub">costo de lo vendido</div></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:18px">
+        <div class="fin inv"><div class="fin-lbl">Costo de lo vendido</div><div class="fin-val" id="f-inv">Bs. 0</div><div class="fin-sub">en el período</div></div>
         <div class="fin gan"><div class="fin-lbl">Ganancia bruta</div><div class="fin-val" id="f-gan">Bs. 0</div><div class="fin-sub" id="f-gan-s"></div></div>
         <div class="fin mar"><div class="fin-lbl">Margen real</div><div class="fin-val" id="f-mar">0%</div><div class="fin-sub">sobre ingresos</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:18px">
+        <div class="fin" style="border-left:4px solid var(--plum)">
+          <div class="fin-lbl">💰 Total invertido en mercadería</div>
+          <div class="fin-val" id="f-inv-acum" style="color:var(--plum)">Bs. 0</div>
+          <div class="fin-sub">acumulado histórico en reposiciones</div>
+        </div>
+        <div class="fin" style="border-left:4px solid #C090B0">
+          <div class="fin-lbl">📦 Valor del stock en bodega</div>
+          <div class="fin-val" id="f-stock-val" style="color:#8B3A78">Bs. 0</div>
+          <div class="fin-sub">stock actual × costo actual por producto</div>
+        </div>
       </div>
       <div class="g2 mb15">
         <div class="card"><div class="card-title">Ingresos vs Costos</div><div class="chart-wrap"><canvas id="ch-fb"></canvas></div></div>
@@ -520,6 +532,11 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
         <div class="card-title">Rentabilidad por producto</div>
         <table><thead><tr><th>Producto</th><th style="text-align:right">Unidades</th><th style="text-align:right">Ingresos</th><th style="text-align:right">Costos</th><th style="text-align:right">Ganancia</th><th style="text-align:right">Margen</th></tr></thead>
         <tbody id="tb-rent"></tbody></table>
+      </div>
+      <div class="card mb15">
+        <div class="card-title">📋 Historial de reposiciones de stock</div>
+        <table><thead><tr><th>Fecha</th><th>Producto</th><th style="text-align:right">Cantidad</th><th style="text-align:right">Costo unit.</th><th style="text-align:right">Total pagado</th><th>Nota</th></tr></thead>
+        <tbody id="tb-repos"></tbody></table>
       </div>
       <div style="text-align:right"><button class="btn btn-ghost" onclick="exportXLS()">⬇ Exportar Excel</button></div>
     </div>
@@ -586,10 +603,10 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
         </div>
       </div>
 
-      <!-- Stock actual -->
+      <!-- Stock + vendidos -->
       <div class="card mb15">
-        <div class="card-title">📦 Stock actual de todos los productos</div>
-        <table><thead><tr><th>Producto</th><th>Categoría</th><th style="text-align:right">Precio</th><th style="text-align:right">Costo</th><th style="text-align:right">Margen</th><th style="text-align:right">Stock</th><th>Estado</th></tr></thead>
+        <div class="card-title">📦 Stock actual vs vendidos — cuadre completo</div>
+        <table><thead><tr><th>Producto</th><th>Categoría</th><th style="text-align:right">Precio</th><th style="text-align:right">Costo</th><th style="text-align:right">Margen</th><th style="text-align:right">Vendidos</th><th style="text-align:right">Repuestos</th><th style="text-align:right">Stock</th><th>Estado</th></tr></thead>
         <tbody id="tb-r-stock"></tbody></table>
       </div>
 
@@ -652,6 +669,31 @@ pre{background:var(--line2);border:2px solid var(--line);border-radius:8px;paddi
   </div>
 </div></div>
 
+<div class="modal-bg" id="m-rep"><div class="modal-box" style="max-width:420px">
+  <div class="modal-head"><span class="modal-title">📦 Reabastecer stock</span><button class="btn-icon" onclick="cerrar('m-rep')">✕</button></div>
+  <div style="background:var(--line2);border-radius:10px;padding:14px;margin-bottom:16px">
+    <div style="font-size:15px;font-weight:700;color:var(--plum)" id="rep-prod-nombre"></div>
+    <div style="display:flex;gap:16px;margin-top:8px;font-size:13px;color:var(--ink2)">
+      <span>Stock actual: <strong id="rep-prod-stock">0</strong></span>
+      <span>Costo previo: <strong id="rep-prod-costo">Bs. 0</strong></span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+    <div><label>Cantidad a agregar *</label><input type="number" id="rep-cant" min="1" placeholder="0" oninput="calcRepTotal()"></div>
+    <div><label>Costo por unidad (Bs.) *</label><input type="number" id="rep-costo" min="0" step="0.01" placeholder="0.00" oninput="calcRepTotal()"></div>
+  </div>
+  <div style="background:var(--ok-bg);border-radius:8px;padding:12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:13px;color:var(--ok);font-weight:600">Total de esta compra:</span>
+    <span style="font-size:18px;font-weight:800;color:var(--ok)" id="rep-total">Bs. 0.00</span>
+  </div>
+  <div class="form-row"><label>Nota (proveedor, fecha compra, etc.)</label><input type="text" id="rep-nota" placeholder="Compra proveedor X…"></div>
+  <p style="font-size:11px;color:var(--ink3);margin-bottom:14px">⚠️ El costo del producto se actualizará al nuevo precio ingresado</p>
+  <div style="display:flex;gap:10px;justify-content:flex-end">
+    <button class="btn btn-ghost" onclick="cerrar('m-rep')">Cancelar</button>
+    <button class="btn btn-plum" onclick="guardarReposicion()">Guardar reposición</button>
+  </div>
+</div></div>
+
 <div class="modal-bg" id="m-abono"><div class="modal-box" style="max-width:360px">
   <div class="modal-head"><span class="modal-title">Registrar abono</span><button class="btn-icon" onclick="cerrar('m-abono')">✕</button></div>
   <p id="ab-info" style="font-size:12px;color:var(--ink3);margin-bottom:14px;font-weight:500"></p>
@@ -704,7 +746,7 @@ async function sbUpdate(table, id, data) {
 // ═══════════════════════════════════
 // ESTADO LOCAL
 // ═══════════════════════════════════
-let DB = { productos:[], clientes:[], ventas:[], pagos:[] };
+let DB = { productos:[], clientes:[], ventas:[], pagos:[], reposiciones:[] };
 let SESSION = null;
 let periodo = 'dia';
 let abono_venta_id = null;
@@ -795,12 +837,13 @@ function doLogout() {
 async function syncAll() {
   document.getElementById('loading').style.display='flex';
   try {
-    const [prods, clis, vens, dets, pags] = await Promise.all([
+    const [prods, clis, vens, dets, pags, repos] = await Promise.all([
       sbGet('productos','select=*&order=nombre'),
       sbGet('clientes','select=*&order=nombre'),
       sbGet('ventas','select=*&order=fecha.desc'),
       sbGet('detalle_ventas','select=*'),
       sbGet('pagos','select=*'),
+      sbGet('reposiciones','select=*&order=fecha.desc'),
     ]);
     if(Array.isArray(prods)) DB.productos = prods.map(p=>({
       id:p.id, nombre:p.nombre, emoji:p.emoji||'🛍️', categoria:p.categoria||'Accesorios',
@@ -821,6 +864,11 @@ async function syncAll() {
     if(Array.isArray(pags)) DB.pagos = pags.map(p=>({
       id:p.id, venta_id:p.venta_id, monto:+p.monto||0,
       metodo:p.metodo||'efectivo', fecha:p.fecha, nota:p.nota||''
+    }));
+    if(Array.isArray(repos)) DB.reposiciones = repos.map(r=>({
+      id:r.id, producto_id:r.producto_id, nombre_producto:r.nombre_producto||'',
+      cantidad:+r.cantidad||0, costo_unitario:+r.costo_unitario||0,
+      costo_total:+r.costo_total||0, fecha:r.fecha, nota:r.nota||''
     }));
     console.log('✓ Sync:', DB.productos.length,'prods,', DB.ventas.length,'ventas');
   } catch(e) { console.error('Sync error:', e); }
@@ -1140,7 +1188,15 @@ function rFin(){
   const vs=filtrarP(DB.ventas,periodo);
   const ing=vs.reduce((s,v)=>s+v.total,0),cos=vs.reduce((s,v)=>s+(v.costo_total||0),0),gan=ing-cos;
   const mar=ing?((gan/ing)*100).toFixed(1):0;
+
+  // Inversión acumulada TOTAL en reposiciones (toda la historia)
+  const invTotal = DB.reposiciones.reduce((s,r)=>s+r.costo_total,0);
+  // Valor del stock actual en bodega (stock × costo actual)
+  const valorStock = DB.productos.reduce((s,p)=>s+(p.stock*p.costo),0);
+
   document.getElementById('f-inv').textContent=fm(cos);
+  document.getElementById('f-inv-acum').textContent=fm(invTotal);
+  document.getElementById('f-stock-val').textContent=fm(valorStock);
   document.getElementById('f-gan').textContent=fm(gan);
   document.getElementById('f-mar').textContent=mar+'%';
   document.getElementById('f-gan-s').textContent=`${fm(ing)} − ${fm(cos)}`;
@@ -1249,17 +1305,23 @@ function rRep(){
   // Stock actual
   const tbStock = document.getElementById('tb-r-stock');
   if(!DB.productos.length){
-    tbStock.innerHTML='<tr><td colspan="7" style="color:var(--ink3);text-align:center;padding:20px">Sin productos</td></tr>';
+    tbStock.innerHTML='<tr><td colspan="9" style="color:var(--ink3);text-align:center;padding:20px">Sin productos</td></tr>';
   } else {
     tbStock.innerHTML=[...DB.productos].sort((a,b)=>a.stock-b.stock).map(p=>{
       const m=p.precio?(((p.precio-p.costo)/p.precio)*100).toFixed(1):0;
-      const est=p.stock===0?'<span class="badge b-bad">Sin stock</span>':'<span class="badge b-ok">'+p.stock+' uds</span>';
+      // Vendidos: suma de todas las ventas
+      const vendidos=DB.ventas.reduce((s,v)=>s+(v.items?.filter(i=>i.id==p.id).reduce((ss,i)=>ss+i.cantidad,0)||0),0);
+      // Repuestos: suma de todas las reposiciones
+      const repuestos=DB.reposiciones.filter(r=>r.producto_id==p.id).reduce((s,r)=>s+r.cantidad,0);
+      const est=p.stock===0?'<span class="badge b-bad">Sin stock</span>':'<span class="badge b-ok">OK</span>';
       return`<tr>
-        <td><span style="font-size:16px;margin-right:6px">${p.emoji||'🛍️'}</span><strong>${p.nombre}</strong></td>
-        <td>${p.categoria}</td>
+        <td><span style="font-size:15px;margin-right:6px">${p.emoji||'🛍️'}</span><strong>${p.nombre}</strong></td>
+        <td style="font-size:12px">${p.categoria}</td>
         <td style="text-align:right">${fm(p.precio)}</td>
         <td style="text-align:right">${fm(p.costo)}</td>
         <td style="text-align:right;color:${m>=30?'var(--ok)':'var(--warn)'}">${m}%</td>
+        <td style="text-align:right;font-weight:700;color:var(--ok)">${vendidos}</td>
+        <td style="text-align:right;font-weight:700;color:var(--plum)">${repuestos}</td>
         <td style="text-align:right;font-weight:700;color:${p.stock===0?'var(--danger)':'var(--ink)'}">${p.stock}</td>
         <td>${est}</td>
       </tr>`;
@@ -1362,6 +1424,10 @@ function exportXLS(){
   DB.productos.forEach(p=>{const m=p.precio?(((p.precio-p.costo)/p.precio)*100).toFixed(1):0;pd.push([p.nombre,p.categoria,p.costo,p.precio,m+'%',p.stock]);});
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(pd),'Productos');
   const ti=DB.ventas.reduce((s,v)=>s+v.total,0),tc=DB.ventas.reduce((s,v)=>s+(v.costo_total||0),0);
+  // Hoja reposiciones
+  const rd2=[['Fecha','Producto','Cantidad','Costo unit.','Total','Nota']];
+  DB.reposiciones.forEach(r=>rd2.push([fd(r.fecha),r.nombre_producto,r.cantidad,r.costo_unitario,r.costo_total,r.nota||'']));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rd2),'Reposiciones');
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['RESUMEN GLIMMER',''],['Fecha',new Date().toLocaleDateString('es-BO')],['',''],['Ingresos',ti],['Costos',tc],['Ganancia',ti-tc],['Margen',ti?((ti-tc)/ti*100).toFixed(1)+'%':'0%'],['',''],['Ventas',DB.ventas.length],['Clientes',DB.clientes.length]]),'Resumen');
   XLSX.writeFile(wb,'Glimmer_'+new Date().toISOString().slice(0,10)+'.xlsx');
   toast('✓ Excel exportado','ok');
@@ -1558,6 +1624,12 @@ function vLimpiar(){
 // ═══════════════════════════════════
 // MODALES
 // ═══════════════════════════════════
+function calcRepTotal(){
+  const cant = parseFloat(document.getElementById('rep-cant').value)||0;
+  const costo = parseFloat(document.getElementById('rep-costo').value)||0;
+  document.getElementById('rep-total').textContent = fm(cant*costo);
+}
+
 function cerrar(id){
   document.getElementById(id).style.display='none';
   // Restaurar botón guardar de cliente si fue editado
